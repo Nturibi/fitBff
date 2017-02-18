@@ -1,12 +1,24 @@
 {
-  "name": "openshift-cartridge-nodejs-template",
+  "name": "fitpro-nodejs",
   "version": "1.0.1",
-  "description": "Custom Node.js cartridge for OpenShift - sample application",
+  "description": "FitPro backend application",
   "private": true,
   "main": "start.js",
   "scripts": {
     "start": "node --use_strict start.js"
   },
   "author": "Ionut-Cristian Florescu <ionut.florescu@gmail.com>",
-  "license": "ISC"
+  "license": "Proprietary",
+  "dependencies": {
+    "body-parser": "^1.16.1",
+    "connect-mongo": "^1.3.2",
+    "cookie-parser": "^1.4.3",
+    "express": "^4.14.1",
+    "fibers": "^1.0.15",
+    "googleapis": "^16.1.0",
+    "multer": "^1.3.0",
+    "passport": "^0.3.2",
+    "passport-google-id-token": "^0.4.0",
+    "winston": "^2.3.1"
+  }
 }
