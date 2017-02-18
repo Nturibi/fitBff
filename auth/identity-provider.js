@@ -3,7 +3,7 @@ const winston = require("winston");
 const settings = require('../settings');
 
 let the_export = EasyExport();
-
+module.exports = the_export;
 let IdentityProvider = function() {
     
 };
@@ -20,7 +20,9 @@ let BasicIdentity = function(displayName, emailAddress, extraInfo) {
     this.extraInfo = extraInfo;
 };
 
-
+the_export.GoogleIdentityProvider = GoogleIdentityProvider;
+the_export.BasicIdentity = BasicIdentity;
+the_export.IdentityProvider = IdentityProvider;
 
 
 GoogleIdentityProvider.prototype = Object.create(IdentityProvider.prototype);
@@ -72,4 +74,4 @@ GoogleIdentityProvider.prototype.getIdentity = function(id, extra, callback) {
     });
     });
     
-}
+};

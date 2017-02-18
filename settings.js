@@ -9,5 +9,5 @@ module.exports = {
     "MONGODB_URL" : 'mongodb://'+db_user+':'+db_password+'@'+db_host+':'+db_port+'/',
     "GOOGLE_CLIENT_ID" : "817292671337-qgapqqk29q99r921qsuca6bppnta6mfp.apps.googleusercontent.com",
     "GOOGLE_CLIENT_SECRET" : "X-egVIfscKMTx0FOh-JbsEHH",
-    "AUTH_METHODS" : ['google-id-token', 'google']
+    "AUTH_METHODS" : ['google-id-token', 'google-authcode']
 };

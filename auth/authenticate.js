@@ -2,9 +2,10 @@ const passport = require('passport'),
       settings = require('../settings'),
       user = require('user'),
       session = require('express-session'),
-      EasyExport = require('../utils/easy-export');
+      EasyExport = require('../utils/easy-export'),
+      winston = require('winston');
 
-let GoogleAuthCodeStrategy = require('passport-google-authcode');
+let GoogleAuthCodeStrategy = require('passport-google-authcode').Strategy;
 let GoogleTokenStrategy = require('passport-google-id-token');
 
 let the_export = EasyExport();
@@ -20,7 +21,7 @@ let init_passport = function(app) {
         clientSecret: settings.GOOGLE_CLIENT_SECRET
     },
     function(accessToken, refreshToken, profile, done) {
-      User.findOrCreate({ "googleId" : profile.id, "accessToken" : accessToken, "refreshToken" : refreshToken }, function (err, user) {
+      User.findOrCreate({ "id" : "Google-"+profile.id, "accessToken" : accessToken, "refreshToken" : refreshToken }, function (err, user) {
           user.refreshToken = refreshToken;
           return done(err, user);
       });
@@ -39,8 +40,12 @@ let init_passport = function(app) {
       clientID: settings.GOOGLE_CLIENT_ID,
     },
     function(parsedToken, googleId, done) {
-        User.findOrCreate({ googleId: googleId }, function (err, user) {
-            return done(err, user);
+        User.findById({ id: 'Google-'+googleId }, function (err, user) {
+            if (!user) {
+                return done('Attempt to create user with token authentication', null);
+            } else {
+                return done(err, user);
+            }
         });
     }
     ));
@@ -59,24 +64,28 @@ let init_auth = function(app) {
     // The post request to this route should include a JSON object with the key id_token set to the one the client received from Google (e.g. after successful Google+ sign-in).
     app.post('/auth/google',
     passport.authenticate(settings.AUTH_METHODS),
-    function (req, res) {
+    function (req, res, next) {
         // do something with req.user
-        if (!req.user.refreshToken) {
+        if (!req.user || !req.user.refreshToken) {
             req.logout();
+            res.status(400);
+            res.end();
             return;
         }
         res.status(req.user? 200 : 401);
         req.session['userid'] = req.user.userid;
+        next();
     });
     
-    app.get('/auth/logout', passport.authenticate(settings.AUTH_METHODS), function(req, res) {
+    app.get('/auth/logout', passport.authenticate(settings.AUTH_METHODS), function(req, res, next) {
        if (req.isAuthenticated()) {
            req.logout();
            req.session.destroy(function(err) {
               if (err) {
-                  console.log(err);
+                  winston.log('info', 'Problem happened destroying session', err);
               } 
            });
+           next();
        } 
     });
     
@@ -92,6 +101,7 @@ function authenticationMiddleware () {
       return next();
     }
     res.status(401);
+    res.end();
   }
 };
 

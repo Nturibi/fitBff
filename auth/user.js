@@ -9,12 +9,15 @@ let db = mongojs(settings.MONGODB_URL, ['userdata']);
 let the_export = EasyExport();
 module.exports = the_export;
 
+// TODO: Implement some sort of locking mechanism so a user can't be accessed and modified concurrently
 the_export.User = function(id) {
     this.id = id;
     this.properties = {};
 };
 
 let User = the_export.User;
+let identityProviders = {};
+identityProviders['Google-'] = new identProvider.GoogleIdentityProvider();
 
 User.findById = function(id, callback) {
     let user = new User(id);
@@ -23,9 +26,9 @@ User.findById = function(id, callback) {
 
 User.findOrCreate = function(searchParams, callback) {
     // Access token omitted because it's short-lived.
-    if (searchParams['googleId'] && !searchParams['id']) {
-        searchParams['id'] = User.fromGoogleId(searchParams['googleId']);
-    }
+    let id = searchParams.id;
+    if (id.indexOf('-') == -1) return; // Not allowed
+    let identityProvider = identityProviders[searchParams.id.substring(0, id.indexOf('-')+1)];
     let user = new User(searchParams.id);
     user.loadFromDatabase(function(err, user) {
         if (err) {
@@ -34,8 +37,15 @@ User.findOrCreate = function(searchParams, callback) {
             return;
         }
         if (!user) {
-            user.create();
-            user.saveToDatabase(callback);
+            user.create(identityProvider, function(err, theuser) {
+                if (err) {
+                    winston.log('info', 'Failed to create user', err);
+                    return callback(err, null);
+                }
+                user.saveToDatabase(function(err, sth) {
+                    callback(err, err ? null : user);
+                });
+            });
         }
     });
 };
@@ -50,30 +60,28 @@ User.prototype.loadFromDatabase = function(callback) {
             }
             user.foundInDatabase = true;
         }
-        if (callback)
-            callback(err, user);
+        if (callback) {
+            callback(err, user.foundInDatabase ? user : null);
+        }
     });
     
 };
 
-let identityProviders = {};
-identityProviders['Google-'] = new identProvider.GoogleIdentityProvider();
 
-User.prototype.create = function(identityProvider) {
-    if (this.id.startsWith("Google-")) {
-        
-    }
-    this.saveToDatabase();
+User.prototype.create = function(identityProvider, callback) {
+    identityProvider.getIdentity(this.id, {"refreshToken" : this.refreshToken}, function(err, myIdentity) {
+        if (err || !myIdentity) {
+            this.properties['name'] = 'Unresolvable Unresolved';
+            this.properties['email'] = 'unresolvable@example.com';
+            winston.log('info', 'Error in loading data from identity provider.', err);
+            return callback(err || 'No identity found.', null);
+        }
+        this.properties['name'] = myIdentity.displayName;
+        this.properties['email'] = myIdentity.emailAddress;
+        callback(null, this);
+    });
 }
 
 User.prototype.saveToDatabase = function(callback) {
     db.update({'id' : this.id}, this, {upsert : true}, callback);
-};
-
-User.toGoogleId = function(id) {
-    return "Google-"+id;
-}
-
-User.fromGoogleId = function(google_id) {
-    return google_id.substring(6);
 };

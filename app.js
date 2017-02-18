@@ -14,24 +14,22 @@ const http         = require('http'),
 
 var app = express();
 auth(app);
-app.get('/health', function(req, res) {
+app.get('/health', function(req, res, next) {
   res.writeHead(200);
   res.end();
+  next();
 });
 app.use(bodyParser.json());
 app.use(express.favicon());
 app.use(express.static('./static'));
-let info = function(req, res) {
+let info = function(req, res, next) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Cache-Control', 'no-cache, no-store');
   res.end(JSON.stringify(sysInfo[req.url.slice(6)]()));
+  next();
 };
 app.get('/info/gen', info);
 app.get('/info/poll', info);
-
-app.post('/user/info', function(req, res) {
-  req.user.id;
-});
 
 
 // let server = http.createServer(function (req, res) {
