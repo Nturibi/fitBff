@@ -73,6 +73,8 @@ let init_auth = function(app) {
             return;
         }
         res.status(req.user? 200 : 401);
+        
+        res.end()
         req.session['userid'] = req.user.userid;
         next();
     });

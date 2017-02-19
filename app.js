@@ -25,11 +25,15 @@ app.use(express.static('./static'));
 let info = function(req, res, next) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Cache-Control', 'no-cache, no-store');
-  res.end(JSON.stringify(sysInfo[req.url.slice(6)]()));
+  res.send(JSON.stringify(sysInfo[req.url.slice(6)]()));
   next();
 };
 app.get('/info/gen', info);
 app.get('/info/poll', info);
+app.get('/', function(req, res, next) {
+  res.status(200).end();
+  next();
+});
 
 
 // let server = http.createServer(function (req, res) {

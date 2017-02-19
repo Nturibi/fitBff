@@ -24,11 +24,13 @@ let success = {
 };
 
 let ALLOW_USER_MODIFY_PROPERTIES = ['name', 'email', 'personal_notes', 'personal_extra'];
-let ALLOW_DOCTOR_MODIFY_PROPERTIES = ['doctors_notes', 'doctors_instructions', 'doctors_extra', 'medications'];
+let ALLOW_DOCTOR_MODIFY_PROPERTIES = ['doctors_notes', 'doctors_instructions', 'doctors_extra', 'medications', ];
 
 let add_user_routes = function(app) {
-    app.all('/user/info', auth.authenticationMiddleware, function(req, res, next) {
+    app.all('/user/info', auth.authenticationMiddleware(), function(req, res, next) {
         let id = req.user.id;
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Cache-Control', 'no-cache, no-store');
         User.findById(id, function (err, user) {
             if (!user) {
                 res.status(404);
@@ -46,8 +48,10 @@ let add_user_routes = function(app) {
         });
     });
     
-    app.post('/user/addPatient', auth.authenticationMiddleware, function(req, res, next) {
+    app.post('/user/addPatient', auth.authenticationMiddleware(), function(req, res, next) {
        let patientId = req.body['patientId'] ;
+       res.setHeader('Content-Type', 'application/json');
+       res.setHeader('Cache-Control', 'no-cache, no-store');
        if (!patientId) {
            res.status(400).send(JSON.stringify(bad_request));
            return next();
@@ -79,8 +83,10 @@ let add_user_routes = function(app) {
        next();
     });
     
-    app.post('/user/addDoctor', auth.authenticationMiddleware, function(req, res, next) {
+    app.post('/user/addDoctor', auth.authenticationMiddleware(), function(req, res, next) {
         let doctorId = req.body['doctorId'];
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Cache-Control', 'no-cache, no-store');
         if (!doctorId) {
             res.status(400).send(JSON.stringify(bad_request));
             return next();
@@ -111,8 +117,10 @@ let add_user_routes = function(app) {
         
     });
     
-    app.post('/user/confirmRequest', function(req, res, next) {
+    app.post('/user/confirmRequest', auth.authenticationMiddleware(), function(req, res, next) {
        let requester = req.body['requesterId'];
+       res.setHeader('Content-Type', 'application/json');
+       res.setHeader('Cache-Control', 'no-cache, no-store');
        if (!requester) {
            res.status(400).send(JSON.stringify(bad_request));
            return next();
@@ -159,9 +167,10 @@ let add_user_routes = function(app) {
            res.status(200).send(JSON.stringify(success));
        });
     });
-    app.post('/user/updateInfo', function(req, res, next) {
+    app.post('/user/updateInfo', auth.authenticationMiddleware(), function(req, res, next) {
         let userId = req.body.id;
-        
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Cache-Control', 'no-cache, no-store');
         User.findById(userId, function(err, user) {
             if (err) {
                 res.status(400).send(JSON.stringify(bad_request));
